@@ -10,9 +10,7 @@ Pre-built files are available on the Releases page.
 
 Credits:
 
-- Mercury https://www.mercurycom.com.cn/
-  
-        (https://service.mercurycom.com.cn/download-2391.html)
+- Mercury https://www.mercurycom.com.cn/ (https://service.mercurycom.com.cn/download-2391.html)
 
 - YoungHguy https://github.com/YoungHguy/ux3h-driver-for-linux
 
