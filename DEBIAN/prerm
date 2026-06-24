@@ -1,0 +1,17 @@
+#!/bin/bash
+YELLOW='\033[1;33m'
+rm /etc/udev/rules.d/aic.rules
+udevadm control --reload
+echo -e "${YELLOW}Uninstall Mercury UX3H (AIC8800) Wi-Fi driver!!!!!\033[0m"
+rmmod aic8800_fdrv
+rmmod aic_load_fw
+cd /AIC8800/drivers/aic8800/aic8800_fdrv/
+make clean
+make uninstall
+cd /AIC8800/drivers/aic8800/aic_load_fw/
+make clean
+make uninstall
+cd /AIC8800/aicrf_test
+make clean
+rm -rf /lib/firmware/aic8800DC/
+#exit 0

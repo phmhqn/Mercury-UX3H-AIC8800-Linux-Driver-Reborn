@@ -1,0 +1,3 @@
+#!/bin/bash
+GREEN='\033[1;32m'
+echo -e "${GREEN}Uninstall Mercury UX3H (AIC8800) Wi-Fi driver successful!!!!!\033[0m"

@@ -1,0 +1,58 @@
+#!/bin/bash
+Main_version=`uname -r |awk -F'.' '{print $1}'`
+Minor_version=`uname -r |awk -F'.' '{print $2}'`
+GREEN='\033[1;32m'
+YELLOW='\033[1;33m'
+RED='\033[0;31m'
+cp /AIC8800/aic.rules /etc/udev/rules.d
+udevadm trigger
+udevadm control --reload
+echo ">>>   udev done"
+if [ -L /dev/aicudisk ]; then
+echo "device exist"
+eject /dev/aicudisk
+else
+echo ">>>   device not exist"
+fi
+cd /AIC8800/fw/
+rm -rf /lib/firmware/aic8800DC
+cp -rf /AIC8800/fw/aic8800DC /lib/firmware/
+echo "cp fw done"
+cd /AIC8800/drivers/aic8800/
+make
+if [ $? -ne 0 ]; then
+    echo ">>>   make failed, install Mercury UX3H (AIC8800) Wi-Fi drvier failed"
+    exit 1
+fi
+make install
+if [ $? -ne 0 ]; then
+    echo ">>>   make install failed, install Mercury UX3H (AIC8800) Wi-Fi driver failed"
+    exit 1
+fi
+modprobe cfg80211
+insmod /AIC8800/drivers/aic8800/aic_load_fw/aic_load_fw.ko
+if [ $? -ne 0 ]; then
+    echo ">>>   insmode aic_load_fw failed, install Mercury UX3H (AIC8800) Wi-Fi driver failed"
+    exit 1
+fi
+insmod /AIC8800/drivers/aic8800/aic8800_fdrv/aic8800_fdrv.ko
+if [ $? -ne 0 ]; then
+    echo ">>>   insmod aic8800_fdrv failed, install Mercury UX3H (AIC8800) Wi-Fi driver failed"
+    exit 1
+fi
+echo ">>>   insmod done"
+cd /AIC8800/aicrf_test/
+make
+if [ $? -ne 0 ]; then
+    echo ">>>   make failed, install Mercury UX3H (AIC8800) Wi-Fi driver failed"
+    exit 1
+fi
+make install
+if [ $? -ne 0 ]; then
+    echo ">>>   make install failed, install Mercury UX3H (AIC8800) Wi-Fi driver failed"
+    exit 1
+fi
+echo ""
+echo -e "${GREEN}Install Mercury UX3H (AIC8800) Wi-Fi driver successful!!!!!\033[0m"
+echo -e "${YELLOW}If you want to remove this driver, the package ID is ${RED}mercury-ux3h-drv${YELLOW}.\033[0m"
+exit 0
