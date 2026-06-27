@@ -1,10 +1,22 @@
-# Mercury UX3H Network Card Driver for newer Linux.
+# Mercury UX3H Network Card Driver for Linux (Reborn).
 
-I have edited the driver to work well on my computer running Ubuntu 26.04 (Linux Kernel 7.0.0)
+~~I have edited the driver to work well on my computer running Ubuntu 26.04 (Linux Kernel 7.0.0)~~  
+Note: This driver has the support of Claude A.I in finding and fixing errors.
 
-I also use Claude A.I to find errors and fix them.
+Now support from Linux kernel 5.x to the latest version.
 
-Pre-built files are available on the Releases page.
+To install, make sure the device is not plugged in. Download the pre-packaged package from the [Releases](https://github.com/phmhqn/Mercury-UX3H-AIC8800-Linux-Driver-Reborn/releases) page, then open your console, navigate to the download folder and execute the following command:
+```
+sudo apt install ./AIC8800-MercuryUX3H-v1.1-rm-UniLinuxKrnl5-6-7.deb
+```
+> *This driver needs to be built according to your computer's configuration, it may take a long time to complete. We advise you to wait patiently.*
+
+To uninstall the driver, execute this command:
+```
+sudo apt purge mercury-ux3h-drv
+```
+
+Have fun!
 
 ---
 
