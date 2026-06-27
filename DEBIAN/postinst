@@ -18,6 +18,35 @@ cd /AIC8800/fw/
 rm -rf /lib/firmware/aic8800DC
 cp -rf /AIC8800/fw/aic8800DC /lib/firmware/
 echo "cp fw done"
+
+# --- Make sure linux headers for the *currently running* kernel exist ---
+# Getting "some" headers package installed is handled by Depends: in
+# DEBIAN/control (linux-headers-generic | linux-headers-amd64), so apt
+# resolves it BEFORE this postinst runs - that avoids running apt-get from
+# inside postinst, which would deadlock against the apt/dpkg lock already
+# held by the outer install transaction.
+#
+# What Depends: can't guarantee is that the installed headers match the
+# kernel actually booted right now (e.g. headers were installed for a newer
+# kernel than the one currently running, pending a reboot). So we still
+# verify that specific match here - if it fails, we stop with a clear,
+# actionable message instead of trying to apt-get install anything ourselves.
+KERNEL_REL="$(uname -r)"
+KERNEL_HEADERS_DIR="/lib/modules/${KERNEL_REL}/build"
+
+if [ -e "$KERNEL_HEADERS_DIR/Makefile" ]; then
+    echo ">>>   linux headers already present for kernel ${KERNEL_REL}"
+else
+    echo ">>>   linux headers for the currently running kernel (${KERNEL_REL}) were not found at ${KERNEL_HEADERS_DIR}."
+    echo ">>>   This usually means headers got installed for a different/newer kernel than the one"
+    echo ">>>   currently booted. Please install the matching package for your distro, e.g.:"
+    echo ">>>     Debian:  sudo apt-get install linux-headers-${KERNEL_REL}   (or linux-headers-amd64)"
+    echo ">>>     Ubuntu:  sudo apt-get install linux-headers-${KERNEL_REL}   (or linux-headers-generic)"
+    echo ">>>   then reboot if needed, and re-run this install."
+    echo ">>>   install Mercury UX3H (AIC8800) Wi-Fi driver failed"
+    exit 1
+fi
+
 cd /AIC8800/drivers/aic8800/
 make
 if [ $? -ne 0 ]; then
@@ -30,6 +59,16 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 modprobe cfg80211
+
+###   This should be used for virtual machine, not real machine
+#modprobe usbcore
+#if ! lsmod | grep -q "^usbcore"; then
+#    echo ">>>   usbcore module not available on this kernel."
+#    echo ">>>   This usually means no USB controller is exposed to this machine"
+#    echo ">>>   (common on VMs without USB passthrough enabled)."
+#    echo ">>>   install Mercury UX3H (AIC8800) Wi-Fi driver failed"
+#    exit 1
+#fi
 insmod /AIC8800/drivers/aic8800/aic_load_fw/aic_load_fw.ko
 if [ $? -ne 0 ]; then
     echo ">>>   insmode aic_load_fw failed, install Mercury UX3H (AIC8800) Wi-Fi driver failed"

@@ -1,5 +1,6 @@
-Package:mercury-ux3h-drv
-Version:1.0-linux7.0.0
-Architecture:amd64
-Maintainer:phmqXPD
-Description:AIC8800 Wi-Fi driver (for Mercury UX3H) deb package. (With the support of Claude A.I Fix)
+Package: mercury-ux3h-drv
+Version: 1.1-rm
+Architecture: amd64
+Maintainer: phmqXPD
+Depends: build-essential, linux-headers-generic | linux-headers-amd64
+Description: AIC8800 Wi-Fi driver (for Mercury UX3H) deb package. (With the support of Claude A.I Fix)

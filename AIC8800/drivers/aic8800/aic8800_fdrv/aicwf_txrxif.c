@@ -173,8 +173,6 @@ fail:
     return ret;
 }
 
-void aicwf_usb_cancel_all_urbs(struct aic_usb_dev *usb_dev);
-
 void aicwf_bus_deinit(struct device *dev)
 {
     struct aicwf_bus *bus_if;

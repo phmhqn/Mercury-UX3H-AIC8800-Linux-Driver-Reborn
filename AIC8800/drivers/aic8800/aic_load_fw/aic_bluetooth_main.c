@@ -8,7 +8,7 @@
 
 
 #define DRV_CONFIG_FW_NAME             "fw.bin"
-#define DRV_DESCRIPTION  "AIC BLUETOOTH"
+#define DRV_DESCRIPTION  "AIC BLUETOOTH. (???Wi-Fi USB firmware loader)"
 #define DRV_COPYRIGHT    "Copyright(c) 2015-2020 AICSemi"
 #define DRV_AUTHOR       "AICSemi"
 #define DRV_VERS_MOD "1.0"

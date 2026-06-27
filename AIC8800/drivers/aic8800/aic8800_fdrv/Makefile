@@ -60,7 +60,7 @@ CONFIG_SDIO_SUPPORT =n
 CONFIG_USB_SUPPORT =y
 CONFIG_RX_REORDER ?=y
 CONFIG_ARP_OFFLOAD =y
-CONFIG_USE_5G ?= n
+CONFIG_USE_5G ?= y
 CONFIG_RADAR_OR_IR_DETECT =n
 CONFIG_DOWNLOAD_FW =n
 CONFIG_RFTEST=y
@@ -244,7 +244,7 @@ ccflags-y += -DNX_TXQ_CNT=4
 endif
 
 # For old kernel (<=3.19)
-ifeq ($(shell test $(VERSION) -lt 4 -a "$(CONFIG_VENDOR_RWNX)" = y ; echo $$?),0)
+ifeq ($(shell test "$(if $(VERSION),$(VERSION),99)" -lt 4 -a "$(CONFIG_VENDOR_RWNX)" = y ; echo $$?),0)
 ccflags-y += -DCONFIG_VENDOR_RWNX_VHT_NO80
 endif
 

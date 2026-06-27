@@ -22,6 +22,7 @@
 #ifndef _RWNX_COMPAT_H_
 #define _RWNX_COMPAT_H_
 #include <linux/version.h>
+#include <net/cfg80211.h>
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(3, 10, 0)
 #error "Minimum kernel version supported is 3.10"
@@ -197,6 +198,37 @@ enum ieee80211_radiotap_he_mu_bits {
 #define cfg80211_cqm_rssi_notify(dev, event, level, gfp) \
     cfg80211_cqm_rssi_notify(dev, event, gfp)
 #endif
+
+/* ieee80211_amsdu_to_8023s(skb, list, addr, iftype, extra_headroom, check_da,
+ * check_sa) gained an extra trailing "bool *amsdu_has_close" parameter on
+ * some kernels/backports. Detect the real declared shape directly instead
+ * of guessing from LINUX_VERSION_CODE (which proved wrong on at least one
+ * 6.1.x distro kernel). */
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wcast-function-type"
+static inline void rwnx_ieee80211_amsdu_to_8023s(struct sk_buff *skb,
+                                                  struct sk_buff_head *list,
+                                                  const u8 *addr, int iftype,
+                                                  const unsigned int extra_headroom,
+                                                  const u8 *check_da, const u8 *check_sa)
+{
+    if (__builtin_types_compatible_p(typeof(&ieee80211_amsdu_to_8023s),
+            void (*)(struct sk_buff *, struct sk_buff_head *, const u8 *, int,
+                     const unsigned int, const u8 *, const u8 *, bool *))) {
+        ((void (*)(struct sk_buff *, struct sk_buff_head *, const u8 *, int,
+                   const unsigned int, const u8 *, const u8 *, bool *))
+         ieee80211_amsdu_to_8023s)(skb, list, addr, iftype, extra_headroom,
+                                    check_da, check_sa, NULL);
+    } else {
+        ((void (*)(struct sk_buff *, struct sk_buff_head *, const u8 *, int,
+                   const unsigned int, const u8 *, const u8 *))
+         ieee80211_amsdu_to_8023s)(skb, list, addr, iftype, extra_headroom,
+                                    check_da, check_sa);
+    }
+}
+#define ieee80211_amsdu_to_8023s_compat(skb, list, addr, iftype, extra_headroom, check_da, check_sa) \
+    rwnx_ieee80211_amsdu_to_8023s(skb, list, addr, iftype, extra_headroom, check_da, check_sa)
+#pragma GCC diagnostic pop
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(4, 9, 0)
 #define ieee80211_amsdu_to_8023s(skb, list, addr, iftype, extra_headroom, check_da, check_sa) \
@@ -437,21 +469,22 @@ typedef __s64 time64_t;
  *  - from_timer()              -> timer_container_of()      (since 6.15)
  *  - del_timer()/del_timer_sync() -> timer_delete()/timer_delete_sync() (old names removed in 6.17)
  *  - in_irq()                  -> in_hardirq()               (old name eventually removed)
- * Detect availability with #ifndef instead of hardcoding a kernel version,
- * since these names can disappear at different times across trees/distros. */
+ *
+ * from_timer/del_timer/del_timer_sync are plain C functions (not macros)
+ * on older kernels, so "#ifndef from_timer" is always true there and would
+ * wrongly redefine them to the new (not-yet-existing) names. Use an
+ * explicit version check for these three instead. in_irq() has been a
+ * macro since forever, so #ifndef is safe for it. */
 #include <linux/timer.h>
 #include <linux/hardirq.h>
 
-#ifndef from_timer
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 15, 0)
 #define from_timer(var, callback_timer, timer_fieldname) \
 	timer_container_of(var, callback_timer, timer_fieldname)
 #endif
 
-#ifndef del_timer
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 17, 0)
 #define del_timer(t) timer_delete(t)
-#endif
-
-#ifndef del_timer_sync
 #define del_timer_sync(t) timer_delete_sync(t)
 #endif
 
@@ -459,29 +492,163 @@ typedef __s64 time64_t;
 #define in_irq() in_hardirq()
 #endif
 
-/* cfg80211_rx_spurious_frame() and cfg80211_rx_unexpected_4addr_frame()
- * gained a "link_id" parameter (for MLO support) starting with kernel 6.7.
- * Use -1 (no specific link) since this driver doesn't support MLO. */
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 7, 0)
+/* ---------------------------------------------------------------------
+ * UNIVERSAL cfg80211 arity detection (works across kernel 5.x/6.x/7.x,
+ * regardless of distro backports or non-standard version numbering).
+ *
+ * Several cfg80211 functions gained an extra "link_id"/"radio_idx"
+ * parameter as multi-link (MLO) / multi-radio support was added, but
+ * *when* that happened varies between trees/distros and cannot be
+ * reliably detected from LINUX_VERSION_CODE alone (e.g. a distro kernel
+ * can backport the change while keeping an "old" version number, or
+ * vice versa).
+ *
+ * Instead, we detect the *actual* function prototype declared in this
+ * kernel's own headers using __builtin_types_compatible_p(), and call
+ * through an explicit function-pointer cast matching what was detected.
+ * This only relies on the compiler (GCC/Clang, both support these
+ * builtins) and the headers actually being built against - no version
+ * guessing involved.
+ * --------------------------------------------------------------------- */
+
+/* The function-pointer casts below are an intentional, well-known compat
+ * technique (also used inside the kernel itself) to call through to
+ * whichever prototype this kernel's headers actually declared. They
+ * trigger a harmless -Wcast-function-type warning on the branch that
+ * isn't selected for this kernel; silence it here to keep build logs
+ * clean. */
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wcast-function-type"
+
+/* cfg80211_rx_spurious_frame(dev, addr, gfp)
+ *                  -> gained "int link_id" before gfp on newer kernels */
+static inline bool rwnx_cfg80211_rx_spurious_frame(struct net_device *dev,
+                                                    const u8 *addr, gfp_t gfp)
+{
+    if (__builtin_types_compatible_p(typeof(&cfg80211_rx_spurious_frame),
+            bool (*)(struct net_device *, const u8 *, int, gfp_t))) {
+        return ((bool (*)(struct net_device *, const u8 *, int, gfp_t))
+                cfg80211_rx_spurious_frame)(dev, addr, -1, gfp);
+    } else {
+        return ((bool (*)(struct net_device *, const u8 *, gfp_t))
+                cfg80211_rx_spurious_frame)(dev, addr, gfp);
+    }
+}
 #define cfg80211_rx_spurious_frame_compat(dev, addr, gfp) \
-	cfg80211_rx_spurious_frame(dev, addr, -1, gfp)
+    rwnx_cfg80211_rx_spurious_frame(dev, addr, gfp)
+
+/* cfg80211_rx_unexpected_4addr_frame(dev, addr, gfp)
+ *                  -> gained "int link_id" before gfp on newer kernels */
+static inline bool rwnx_cfg80211_rx_unexpected_4addr_frame(struct net_device *dev,
+                                                            const u8 *addr, gfp_t gfp)
+{
+    if (__builtin_types_compatible_p(typeof(&cfg80211_rx_unexpected_4addr_frame),
+            bool (*)(struct net_device *, const u8 *, int, gfp_t))) {
+        return ((bool (*)(struct net_device *, const u8 *, int, gfp_t))
+                cfg80211_rx_unexpected_4addr_frame)(dev, addr, -1, gfp);
+    } else {
+        return ((bool (*)(struct net_device *, const u8 *, gfp_t))
+                cfg80211_rx_unexpected_4addr_frame)(dev, addr, gfp);
+    }
+}
 #define cfg80211_rx_unexpected_4addr_frame_compat(dev, addr, gfp) \
-	cfg80211_rx_unexpected_4addr_frame(dev, addr, -1, gfp)
+    rwnx_cfg80211_rx_unexpected_4addr_frame(dev, addr, gfp)
+
+/* cfg80211_cac_event(dev, chandef, event, gfp)
+ *                  -> gained "int link_id" before event on newer kernels */
+static inline void rwnx_cfg80211_cac_event(struct net_device *dev,
+                                           const struct cfg80211_chan_def *chandef,
+                                           enum nl80211_radar_event event, gfp_t gfp)
+{
+    if (__builtin_types_compatible_p(typeof(&cfg80211_cac_event),
+            void (*)(struct net_device *, const struct cfg80211_chan_def *,
+                     int, enum nl80211_radar_event, gfp_t))) {
+        ((void (*)(struct net_device *, const struct cfg80211_chan_def *,
+                   int, enum nl80211_radar_event, gfp_t))
+         cfg80211_cac_event)(dev, chandef, -1, event, gfp);
+    } else {
+        ((void (*)(struct net_device *, const struct cfg80211_chan_def *,
+                   enum nl80211_radar_event, gfp_t))
+         cfg80211_cac_event)(dev, chandef, event, gfp);
+    }
+}
+#define cfg80211_cac_event_compat(dev, chandef, event, gfp) \
+    rwnx_cfg80211_cac_event(dev, chandef, event, gfp)
+
+/* cfg80211_ch_switch_started_notify() has had several historical shapes:
+ *   (dev, chandef, count)                                  - oldest
+ *   (dev, chandef, count, block_tx)                        - 5.11+
+ *   (dev, chandef, link_id, count, block_tx)                - 6.1+
+ *   (dev, chandef, link_id, count, block_tx, punct_bitmap)  - 6.3+ (some trees)
+ * Try each known prototype via the same builtin-detection trick, instead
+ * of guessing from LINUX_VERSION_CODE. The puncturing bitmap (if needed)
+ * is read from chandef->punctured, so we never depend on whether
+ * struct cfg80211_csa_settings still carries a separate punct_bitmap field. */
+static inline void rwnx_cfg80211_ch_switch_started_notify(struct net_device *dev,
+                                                           const struct cfg80211_chan_def *chandef,
+                                                           u8 count, bool block_tx)
+{
+    /* "punctured" only exists on kernels with EHT puncturing support;
+     * NL80211_EXT_FEATURE_EHT_PUNCTURING is defined exactly on those
+     * kernels, so use it as a safe feature test instead of touching a
+     * struct member that may not exist on older (5.x) kernels. */
+#if defined(NL80211_EXT_FEATURE_EHT_PUNCTURING)
+    u16 punct = chandef->punctured;
 #else
-#define cfg80211_rx_spurious_frame_compat(dev, addr, gfp) \
-	cfg80211_rx_spurious_frame(dev, addr, gfp)
-#define cfg80211_rx_unexpected_4addr_frame_compat(dev, addr, gfp) \
-	cfg80211_rx_unexpected_4addr_frame(dev, addr, gfp)
+    u16 punct = 0;
 #endif
 
-/* cfg80211_cac_event() also gained a "link_id" parameter starting with
- * kernel 6.7 (MLO support). Use -1 (no specific link). */
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 7, 0)
-#define cfg80211_cac_event_compat(dev, chandef, event, gfp) \
-	cfg80211_cac_event(dev, chandef, -1, event, gfp)
-#else
-#define cfg80211_cac_event_compat(dev, chandef, event, gfp) \
-	cfg80211_cac_event(dev, chandef, event, gfp)
-#endif
+    if (__builtin_types_compatible_p(typeof(&cfg80211_ch_switch_started_notify),
+            void (*)(struct net_device *, const struct cfg80211_chan_def *,
+                     int, u8, bool, u16))) {
+        ((void (*)(struct net_device *, const struct cfg80211_chan_def *,
+                   int, u8, bool, u16))
+         cfg80211_ch_switch_started_notify)(dev, chandef, -1, count, block_tx, punct);
+    } else if (__builtin_types_compatible_p(typeof(&cfg80211_ch_switch_started_notify),
+            void (*)(struct net_device *, const struct cfg80211_chan_def *,
+                     int, u8, bool))) {
+        ((void (*)(struct net_device *, const struct cfg80211_chan_def *,
+                   int, u8, bool))
+         cfg80211_ch_switch_started_notify)(dev, chandef, -1, count, block_tx);
+    } else if (__builtin_types_compatible_p(typeof(&cfg80211_ch_switch_started_notify),
+            void (*)(struct net_device *, const struct cfg80211_chan_def *,
+                     u8, bool))) {
+        ((void (*)(struct net_device *, const struct cfg80211_chan_def *, u8, bool))
+         cfg80211_ch_switch_started_notify)(dev, chandef, count, block_tx);
+    } else {
+        ((void (*)(struct net_device *, const struct cfg80211_chan_def *, u8))
+         cfg80211_ch_switch_started_notify)(dev, chandef, count);
+    }
+}
+#define cfg80211_ch_switch_started_notify_compat(dev, chandef, count, block_tx) \
+    rwnx_cfg80211_ch_switch_started_notify(dev, chandef, count, block_tx)
+
+#pragma GCC diagnostic pop
+
+/* ---------------------------------------------------------------------
+ * cfg80211_ops callbacks that gained a "radio_idx" (multi-radio wiphy)
+ * or "dev" parameter on some kernels: set_monitor_channel,
+ * set_wiphy_params, set_tx_power, start_radar_detection.
+ *
+ * Unlike the call-time helpers above, these are functions *we* implement
+ * and hand to cfg80211 via struct cfg80211_ops, so the function we assign
+ * must have the exact parameter list this kernel's struct field expects.
+ *
+ * Guessing from LINUX_VERSION_CODE is unreliable (distros backport at
+ * different times/version numbers), and even a uAPI feature macro such
+ * as NL80211_ATTR_WIPHY_RADIO_INDEX is not a safe proxy: a kernel can
+ * have the new cfg80211_ops shape without that macro being defined (as
+ * seen in practice), so it can silently pick the wrong signature.
+ *
+ * Instead, for each callback we provide two fully separate, correctly
+ * written implementations (one per known shape) and pick whichever one's
+ * type is *actually* compatible with the real field type declared in
+ * this kernel's struct cfg80211_ops - checked directly via
+ * __builtin_types_compatible_p(), so there is nothing to guess. */
+#define RWNX_CFG80211_OP_COMPAT(field, new_fn, old_fn) \
+    (__builtin_choose_expr( \
+        __builtin_types_compatible_p(typeof(((struct cfg80211_ops *)0)->field), \
+                                      typeof(&(new_fn))), \
+        &(new_fn), &(old_fn)))
 
 #endif /* _RWNX_COMPAT_H_ */

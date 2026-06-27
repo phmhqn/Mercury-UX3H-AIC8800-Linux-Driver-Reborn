@@ -11,6 +11,9 @@ make uninstall
 cd /AIC8800/drivers/aic8800/aic_load_fw/
 make clean
 make uninstall
+cd /AIC8800/drivers/aic8800/
+make clean
+rm -f .module-common.o .module-common.o.cmd
 cd /AIC8800/aicrf_test
 make clean
 rm -rf /lib/firmware/aic8800DC/
