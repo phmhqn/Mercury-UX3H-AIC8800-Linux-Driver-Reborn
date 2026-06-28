@@ -466,7 +466,7 @@ DEBUGFS_READ_WRITE_FILE_OPS(um_helper);
 /*
  * Calls a userspace pgm
  */
-int rwnx_um_helper(struct rwnx_debugfs *rwnx_debugfs, const char *cmd)
+static int rwnx_um_helper(struct rwnx_debugfs *rwnx_debugfs, const char *cmd)
 {
     char *envp[] = { "PATH=/sbin:/usr/sbin:/bin:/usr/bin", NULL };
     char **argv;
@@ -500,7 +500,7 @@ static void rwnx_um_helper_work(struct work_struct *ws)
     rwnx_debugfs->helper_scheduled = false;
 }
 
-int rwnx_trigger_um_helper(struct rwnx_debugfs *rwnx_debugfs)
+static int rwnx_trigger_um_helper(struct rwnx_debugfs *rwnx_debugfs)
 {
     struct rwnx_hw *rwnx_hw = container_of(rwnx_debugfs, struct rwnx_hw,
                                            debugfs);
@@ -523,7 +523,7 @@ int rwnx_trigger_um_helper(struct rwnx_debugfs *rwnx_debugfs)
     return 0;
 }
 
-int rwnx_dbgfs_register_fw_dump(struct rwnx_hw *rwnx_hw,
+static int rwnx_dbgfs_register_fw_dump(struct rwnx_hw *rwnx_hw,
                                 struct dentry *dir_drv,
                                 struct dentry *dir_diags)
 {

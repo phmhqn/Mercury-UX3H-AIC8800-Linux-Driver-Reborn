@@ -767,7 +767,7 @@ void rwnx_enable_mfp(struct rwnx_hw *rwnx_hw)
 extern u8_l vendor_extension_data[256];
 extern u8_l vendor_extension_len;
 
-void rwnx_insert_vendor_extension_in_bcn(struct rwnx_bcn *bcn){
+static void rwnx_insert_vendor_extension_in_bcn(struct rwnx_bcn *bcn){
 	u8_l temp_ie[256];
 	u8_l vendor_extension_subelement[3] = {0x00,0x37,0x2A};
 	u8_l vendor_extension_id[2] = {0x10,0x49};
@@ -1126,7 +1126,7 @@ void rwnx_external_auth_disable(struct rwnx_vif *vif)
  *
  * If there is no link then the power mode for next peer is used;
  */
-void rwnx_update_mesh_power_mode(struct rwnx_vif *vif)
+static void rwnx_update_mesh_power_mode(struct rwnx_vif *vif)
 {
     enum nl80211_mesh_power_mode mesh_pm;
     struct rwnx_sta *sta;
@@ -1666,7 +1666,7 @@ static int parse_line (char *line, char *argv[])
     return (nargs);
 }
 
-unsigned int command_strtoul(const char *cp, char **endp, unsigned int base)
+static unsigned int command_strtoul(const char *cp, char **endp, unsigned int base)
 {
     unsigned int result = 0, value, is_neg=0;
 
@@ -1700,7 +1700,7 @@ unsigned int command_strtoul(const char *cp, char **endp, unsigned int base)
 }
 
 
-int handle_private_cmd(struct net_device *net, char *command, u32 cmd_len)
+static int handle_private_cmd(struct net_device *net, char *command, u32 cmd_len)
 {
     int bytes_written = 0;
     char* para = NULL;
@@ -2368,7 +2368,7 @@ extern int reg_regdb_size;
 extern u8_l vendor_extension_data[256];
 extern u8_l vendor_extension_len;
 
-void set_vendor_extension_ie(char *command){
+static void set_vendor_extension_ie(char *command){
 
 	char databyte[3]={0x00, 0x00, 0x00};
 	int skip = strlen(CMD_SET_VENDOR_EX_IE) + 1;
@@ -2391,7 +2391,7 @@ void set_vendor_extension_ie(char *command){
 }
 #endif//CONFIG_SET_VENDOR_EXTENSION_IE
 
-int android_priv_cmd(struct net_device *net, struct ifreq *ifr, int cmd)
+static int android_priv_cmd(struct net_device *net, struct ifreq *ifr, int cmd)
 {
 #define PRIVATE_COMMAND_MAX_LEN 8192
 #define PRIVATE_COMMAND_DEF_LEN 4096
@@ -3399,7 +3399,7 @@ static void rwnx_cfgp2p_stop_p2p_device(struct wiphy *wiphy, struct wireless_dev
     return;
 }
 
-int rwnx_send_check_p2p(struct cfg80211_scan_request *param){
+static int rwnx_send_check_p2p(struct cfg80211_scan_request *param){
 	int index = (u8)min_t(int, SCAN_SSID_MAX, param->n_ssids);
 	int i = 0;
 
@@ -4112,7 +4112,7 @@ static int rwnx_cfg80211_del_station_compat(struct wiphy *wiphy,
 }
 
 
-void apm_staloss_work_process(struct work_struct *work)
+static void apm_staloss_work_process(struct work_struct *work)
 {
 	struct rwnx_hw *rwnx_hw = container_of(work, struct rwnx_hw, apmStalossWork);
 	struct rwnx_sta *cur, *tmp;
@@ -4226,7 +4226,7 @@ void apm_staloss_work_process(struct work_struct *work)
 }
 
 
-void apm_probe_sta_work_process(struct work_struct *work)
+static void apm_probe_sta_work_process(struct work_struct *work)
 {
        struct apm_probe_sta *probe_sta = container_of(work, struct apm_probe_sta, apmprobestaWork);
        struct rwnx_vif *rwnx_vif = container_of(probe_sta, struct rwnx_vif, sta_probe);
@@ -4727,7 +4727,7 @@ static int rwnx_cfg80211_set_monitor_channel_new(struct wiphy *wiphy,
  * @probe_client: probe an associated client, must return a cookie that it
  *	later passes to cfg80211_probe_status().
  */
-int rwnx_cfg80211_probe_client(struct wiphy *wiphy, struct net_device *dev,
+static int rwnx_cfg80211_probe_client(struct wiphy *wiphy, struct net_device *dev,
             const u8 *peer, u64 *cookie)
 {
     //struct rwnx_hw *rwnx_hw = wiphy_priv(wiphy);
@@ -4764,7 +4764,7 @@ int rwnx_cfg80211_probe_client(struct wiphy *wiphy, struct net_device *dev,
  *	registered. Note that this callback may not sleep, and cannot run
  *	concurrently with itself.
  */
-void rwnx_cfg80211_mgmt_frame_register(struct wiphy *wiphy,
+static void rwnx_cfg80211_mgmt_frame_register(struct wiphy *wiphy,
 #if (LINUX_VERSION_CODE < KERNEL_VERSION(3,6,0))
                    struct net_device *dev,
 #else
@@ -5194,7 +5194,7 @@ static int rwnx_cfg80211_get_channel(struct wiphy *wiphy,
     return 0;
 }
 #else
-struct ieee80211_channel *rwnx_cfg80211_get_channel(struct wiphy *wiphy)
+static struct ieee80211_channel *rwnx_cfg80211_get_channel(struct wiphy *wiphy)
 {
     struct rwnx_hw *rwnx_hw = wiphy_priv(wiphy);
     struct ieee80211_channel *chan = NULL;
@@ -5461,7 +5461,7 @@ int rwnx_cfg80211_set_cqm_rssi_config(struct wiphy *wiphy,
  *	everything. It should do it's best to verify requests and reject them
  *	as soon as possible.
  */
-int rwnx_cfg80211_channel_switch(struct wiphy *wiphy,
+static int rwnx_cfg80211_channel_switch(struct wiphy *wiphy,
                                  struct net_device *dev,
                                  struct cfg80211_csa_settings *params)
 {
@@ -5788,7 +5788,7 @@ rwnx_cfg80211_tdls_cancel_channel_switch(struct wiphy *wiphy,
 /**
  * @change_bss: Modify parameters for a given BSS (mainly for AP mode).
  */
-int rwnx_cfg80211_change_bss(struct wiphy *wiphy, struct net_device *dev,
+static int rwnx_cfg80211_change_bss(struct wiphy *wiphy, struct net_device *dev,
                              struct bss_parameters *params)
 {
     struct rwnx_vif *rwnx_vif = netdev_priv(dev);
@@ -8725,7 +8725,7 @@ static int start_from_bootrom(struct rwnx_hw *rwnx_hw)
 }
 
 
-int rwnx_ic_system_init(struct rwnx_hw *rwnx_hw){
+static int rwnx_ic_system_init(struct rwnx_hw *rwnx_hw){
 
 	if(rwnx_hw->usbdev->chipid == PRODUCT_ID_AIC8801){
 		system_config(rwnx_hw);
@@ -8752,7 +8752,7 @@ int rwnx_ic_system_init(struct rwnx_hw *rwnx_hw){
 }
 
 
-int rwnx_ic_rf_init(struct rwnx_hw *rwnx_hw){
+static int rwnx_ic_rf_init(struct rwnx_hw *rwnx_hw){
 	struct mm_set_rf_calib_cfm cfm;
 	int ret = 0;
 

@@ -618,7 +618,7 @@ void nat25_db_cleanup(struct rwnx_vif *vif)
 }
 
 
-void nat25_db_expire(struct rwnx_vif *vif)
+static void nat25_db_expire(struct rwnx_vif *vif)
 {
 	int i;
 	spin_lock_bh(&vif->br_ext_lock);
@@ -1443,7 +1443,7 @@ int nat25_handle_frame(struct rwnx_vif *vif, struct sk_buff *skb)
 }
 
 #if 0
-void mac_clone(_adapter *priv, unsigned char *addr)
+static void mac_clone(_adapter *priv, unsigned char *addr)
 {
 	struct sockaddr sa;
 

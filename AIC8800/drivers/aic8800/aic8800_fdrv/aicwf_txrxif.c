@@ -28,7 +28,7 @@
 #endif
 
 #ifdef CONFIG_RX_TASKLET
-int aicwf_tasklet_rxframes(struct aicwf_rx_priv *rx_priv);
+static int aicwf_tasklet_rxframes(struct aicwf_rx_priv *rx_priv);
 #endif
 #ifdef CONFIG_TX_TASKLET
 void aicwf_tasklet_tx_process(struct aic_usb_dev *usb_dev);
@@ -322,7 +322,7 @@ void rwnx_frame_parser(char* tag, char* data, unsigned long len);
 #endif
 
 #ifdef CONFIG_RX_TASKLET
-int aicwf_tasklet_rxframes(struct aicwf_rx_priv *rx_priv)
+static int aicwf_tasklet_rxframes(struct aicwf_rx_priv *rx_priv)
 {
 
 		int ret = 0;
@@ -1108,7 +1108,7 @@ void rxbuff_free(struct rx_buff *rxbuff)
    kfree(rxbuff);
 }
 
-struct rx_buff *rxbuff_queue_penq(struct rx_frame_queue *pq, struct rx_buff *p)
+static struct rx_buff *rxbuff_queue_penq(struct rx_frame_queue *pq, struct rx_buff *p)
 {
 
     struct list_head *q;

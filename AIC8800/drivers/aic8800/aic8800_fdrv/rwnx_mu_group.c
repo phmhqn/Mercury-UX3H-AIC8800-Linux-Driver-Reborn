@@ -410,7 +410,7 @@ void rwnx_mu_group_create(struct rwnx_mu_info *mu, struct rwnx_sta *sta,
  * - not all combinations are created, to avoid to much processing.
  * - reschedule delay should be adaptative
  */
-void rwnx_mu_group_work(struct work_struct *ws)
+static void rwnx_mu_group_work(struct work_struct *ws)
 {
     struct delayed_work *dw = container_of(ws, struct delayed_work, work);
     struct rwnx_mu_info *mu = container_of(dw, struct rwnx_mu_info, group_work);

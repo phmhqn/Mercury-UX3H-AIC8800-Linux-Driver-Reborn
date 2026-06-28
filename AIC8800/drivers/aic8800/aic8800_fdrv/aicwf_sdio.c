@@ -26,10 +26,10 @@
 extern uint8_t scanning;
 
 #ifdef CONFIG_PLATFORM_ALLWINNER
-void platform_wifi_power_off(void);
+static void platform_wifi_power_off(void);
 #endif
 
-int aicwf_sdio_readb(struct aic_sdio_dev *sdiodev, uint regaddr, u8 *val)
+static int aicwf_sdio_readb(struct aic_sdio_dev *sdiodev, uint regaddr, u8 *val)
 {
     int ret;
     sdio_claim_host(sdiodev->func);
@@ -277,7 +277,7 @@ extern void sunxi_mmc_rescan_card(unsigned ids);
 extern void sunxi_wlan_set_power(int on);
 extern int sunxi_wlan_get_bus_index(void);
 
-int platform_wifi_power_on(void)
+static int platform_wifi_power_on(void)
 {
 	int ret=0;
 	int wlan_bus_index=sunxi_wlan_get_bus_index();
@@ -293,7 +293,7 @@ int platform_wifi_power_on(void)
 	return ret;
 }
 
-void platform_wifi_power_off(void)
+static void platform_wifi_power_off(void)
 {
 	int wlan_bus_index = sunxi_wlan_get_bus_index();
     if(wlan_bus_index < 0) {
@@ -353,7 +353,7 @@ void aicwf_sdio_exit(void)
     kfree(g_rwnx_plat);
 }
 
-int aicwf_sdio_wakeup(struct aic_sdio_dev *sdiodev)
+static int aicwf_sdio_wakeup(struct aic_sdio_dev *sdiodev)
 {
     int ret = 0;
         int read_retry;
@@ -400,7 +400,7 @@ int aicwf_sdio_wakeup(struct aic_sdio_dev *sdiodev)
 }
 
 extern u8 dhcped;
-int aicwf_sdio_sleep_allow(struct aic_sdio_dev *sdiodev)
+static int aicwf_sdio_sleep_allow(struct aic_sdio_dev *sdiodev)
 {
     int ret = 0;
     struct aicwf_bus *bus_if = sdiodev->bus_if;
@@ -550,7 +550,7 @@ static void aicwf_sdio_bus_stop(struct device *dev)
     sdio_dbg("exit %s\n",__func__);
 }
 
-struct sk_buff *aicwf_sdio_readframes(struct aic_sdio_dev *sdiodev)
+static struct sk_buff *aicwf_sdio_readframes(struct aic_sdio_dev *sdiodev)
 {
     int ret = 0;
     u32 size = 0;

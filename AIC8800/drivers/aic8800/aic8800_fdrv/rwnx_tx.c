@@ -1035,7 +1035,7 @@ static bool rwnx_amsdu_add_subframe(struct rwnx_hw *rwnx_hw, struct sk_buff *skb
 #endif /* CONFIG_RWNX_AMSDUS_TX */
 
 #ifdef CONFIG_BR_SUPPORT
-int aic_br_client_tx(struct rwnx_vif *vif, struct sk_buff **pskb)
+static int aic_br_client_tx(struct rwnx_vif *vif, struct sk_buff **pskb)
 {
 	struct sk_buff *skb = *pskb;
 

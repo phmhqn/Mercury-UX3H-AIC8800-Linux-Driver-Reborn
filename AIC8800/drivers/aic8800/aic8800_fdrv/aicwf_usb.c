@@ -145,6 +145,7 @@ static void aicwf_usb_msg_rx_buf_put(struct aic_usb_dev *usb_dev, struct aicwf_u
 }
 #endif
 
+#ifdef CONFIG_PER_STA_FC
 static void rwnx_stop_sta_all_queues(struct rwnx_sta *sta, struct rwnx_hw *rwnx_hw)
 {
         u8 tid;
@@ -164,6 +165,7 @@ static void rwnx_wake_sta_all_queues(struct rwnx_sta *sta, struct rwnx_hw *rwnx_
                  netif_wake_subqueue(txq->ndev, txq->ndev_idx);
          }
  }
+#endif /* CONFIG_PER_STA_FC */
 
 static void usb_txc_sta_flowctrl(struct aicwf_usb_buf *usb_buf, struct aic_usb_dev *usb_dev)
 {
@@ -431,7 +433,7 @@ static void aicwf_usb_rx_complete(struct urb *urb)
 #endif
 
 #ifdef CONFIG_USB_MSG_IN_EP
-void aicwf_usb_msg_rx_submit_all_urb_(struct aic_usb_dev *usb_dev);
+static void aicwf_usb_msg_rx_submit_all_urb_(struct aic_usb_dev *usb_dev);
 
 static void aicwf_usb_msg_rx_complete(struct urb *urb)
 {
@@ -673,7 +675,7 @@ static void aicwf_usb_msg_rx_submit_all_urb(struct aic_usb_dev *usb_dev)
 #endif
 
 #ifdef CONFIG_USB_MSG_IN_EP
-void aicwf_usb_msg_rx_submit_all_urb_(struct aic_usb_dev *usb_dev){
+static void aicwf_usb_msg_rx_submit_all_urb_(struct aic_usb_dev *usb_dev){
 	aicwf_usb_msg_rx_submit_all_urb(usb_dev);
 }
 #endif
@@ -715,7 +717,7 @@ static void aicwf_usb_tx_prepare(struct aic_usb_dev *usb_dev)
 }
 
 #ifdef CONFIG_USB_TX_AGGR
-int aicwf_usb_send_pkt(struct aic_usb_dev *usb_dev, u8 *buf, uint buf_len)
+static int aicwf_usb_send_pkt(struct aic_usb_dev *usb_dev, u8 *buf, uint buf_len)
 {
     int ret = 0;
     struct aicwf_usb_buf *usb_buf;
@@ -762,7 +764,7 @@ int aicwf_usb_send_pkt(struct aic_usb_dev *usb_dev, u8 *buf, uint buf_len)
     return ret;
 }
 
-int aicwf_usb_aggr(struct aicwf_tx_priv *tx_priv, struct sk_buff *pkt)
+static int aicwf_usb_aggr(struct aicwf_tx_priv *tx_priv, struct sk_buff *pkt)
 {
     struct rwnx_txhdr *txhdr = (struct rwnx_txhdr *)pkt->data;
     u8 usb_header[8];
@@ -809,7 +811,7 @@ int aicwf_usb_aggr(struct aicwf_tx_priv *tx_priv, struct sk_buff *pkt)
     return 0;
 }
 
-int aicwf_usb_send(struct aicwf_tx_priv *tx_priv)
+static int aicwf_usb_send(struct aicwf_tx_priv *tx_priv)
 {
     struct sk_buff *pkt;
     struct sk_buff *tx_buf;

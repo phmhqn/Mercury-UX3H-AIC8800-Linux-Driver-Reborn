@@ -1009,7 +1009,7 @@ static inline int rwnx_rx_sm_connect_ind(struct rwnx_hw *rwnx_hw,
 }
 
 #if 0
-void rwnx_cfg80211_unlink_bss(struct rwnx_hw *rwnx_hw, struct rwnx_vif *rwnx_vif){
+static void rwnx_cfg80211_unlink_bss(struct rwnx_hw *rwnx_hw, struct rwnx_vif *rwnx_vif){
 	struct wiphy *wiphy = rwnx_hw->wiphy;
 	struct cfg80211_bss *bss = NULL;
 

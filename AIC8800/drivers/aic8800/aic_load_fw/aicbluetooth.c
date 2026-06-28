@@ -806,7 +806,7 @@ void get_userconfig_txpwr_ofst(txpwr_ofst_conf_t *txpwr_ofst){
 
 EXPORT_SYMBOL(get_userconfig_txpwr_ofst);
 
-void rwnx_plat_userconfig_set_value(char *command, char *value){	
+static void rwnx_plat_userconfig_set_value(char *command, char *value){	
 	//TODO send command
 	printk("%s:command=%s value=%s \r\n", __func__, command, value);
 	if(!strcmp(command, "enable")){
@@ -949,7 +949,7 @@ int rwnx_plat_userconfig_upload_android(char *filename){
 
 
 
-int aicbt_patch_table_free(struct aicbt_patch_table **head)
+static int aicbt_patch_table_free(struct aicbt_patch_table **head)
 {
 	struct aicbt_patch_table *p = *head, *n = NULL;
 	while (p) {
@@ -977,7 +977,7 @@ static struct aicbt_info_t aicbt_info = {
     .txpwr_lvl     = AICBT_TXPWR_LVL_DEFAULT,
 };
 
-int aicbt_patch_table_load(struct aic_usb_dev *usbdev, struct aicbt_patch_table *_head)
+static int aicbt_patch_table_load(struct aic_usb_dev *usbdev, struct aicbt_patch_table *_head)
 {
 	struct aicbt_patch_table *head, *p;
 	int ret = 0, i;

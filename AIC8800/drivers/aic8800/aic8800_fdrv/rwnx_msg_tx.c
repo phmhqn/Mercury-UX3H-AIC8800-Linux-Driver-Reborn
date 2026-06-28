@@ -167,7 +167,7 @@ static inline void limit_chan_bw(u8_l *bw, u16_l primary, u16_l *center1)
     *center1 = primary + new_oft;
 }
 
-struct rwnx_cmd *rwnx_cmd_malloc(void){
+static struct rwnx_cmd *rwnx_cmd_malloc(void){
 	struct rwnx_cmd *cmd = NULL;
 	unsigned long flags = 0;
 
@@ -234,7 +234,7 @@ void rwnx_free_cmd_array(void){
 
 
 #if 0
-int rwnx_init_msg_array(void){
+static int rwnx_init_msg_array(void){
 
 	printk("%s enter\r\n", __func__);
 	spin_lock_init(&msg_array_lock);
@@ -249,7 +249,7 @@ int rwnx_init_msg_array(void){
 }
 
 
-void rwnx_free_msg_array(void){
+static void rwnx_free_msg_array(void){
 
 	printk("%s enter\r\n", __func__);
 #if 1
@@ -260,7 +260,7 @@ void rwnx_free_msg_array(void){
 	printk("%s exit\r\n", __func__);
 }
 
-struct lmac_msg *rwnx_msg_malloc_(void){
+static struct lmac_msg *rwnx_msg_malloc_(void){
 	struct lmac_msg *msg = NULL;
 
 
@@ -1219,7 +1219,7 @@ int rwnx_send_get_sta_info_req(struct rwnx_hw *rwnx_hw, u8_l sta_idx, struct mm_
 
 
 #if 0
-int rwnx_send_get_sta_txinfo_req(struct rwnx_hw *rwnx_hw, u8_l sta_idx, struct mm_get_sta_txinfo_cfm *cfm)
+static int rwnx_send_get_sta_txinfo_req(struct rwnx_hw *rwnx_hw, u8_l sta_idx, struct mm_get_sta_txinfo_cfm *cfm)
 {
     struct mm_get_sta_txinfo_req *get_txinfo_req;
     int error;
@@ -1291,7 +1291,7 @@ int rwnx_send_txop_req(struct rwnx_hw *rwnx_hw, uint16_t *txop, u8_l long_nav_en
     return error;
 }
 
-int rwnx_send_vendor_trx_param_req(struct rwnx_hw *rwnx_hw, uint32_t *edca, uint8_t vif_idx, uint8_t retry_cnt)
+static int rwnx_send_vendor_trx_param_req(struct rwnx_hw *rwnx_hw, uint32_t *edca, uint8_t vif_idx, uint8_t retry_cnt)
 {
 	struct mm_set_vendor_trx_param_req *req;
 	int error;
@@ -2552,7 +2552,7 @@ u8_l vendor_extension_data[]={
 	0x36,0x38,0x2e,0x31,0x35,0x34,0x2e,0x31};
 #endif
 
-void rwnx_insert_vendor_extension_data(struct scanu_vendor_ie_req *ie_req){
+static void rwnx_insert_vendor_extension_data(struct scanu_vendor_ie_req *ie_req){
 	u8_l temp_ie[256];
 	u8_l vendor_extension_subelement[3] = {0x00,0x37,0x2A};
 	u8_l vendor_extension_id[2] = {0x10,0x49};
