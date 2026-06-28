@@ -1,5 +1,40 @@
+update_date:2026_0628_1527
+version:v1.1 + v1.2
+info:
+    === Universal, no version guessing ===
+    [aic8800_fdrv/rwnx_compat.h] cfg80211_rx_spurious_frame / cfg80211_rx_unexpected_4addr_frame:
+    Implemented a wrapper using __builtin_types_compatible_p to automatically detect the correct signature (with/without link_id), replacing unreliable #if LINUX_VERSION_CODE guesses.
+    [aic8800_fdrv/rwnx_compat.h] cfg80211_cac_event: Applied the same universal technique.
+    [aic8800_fdrv/rwnx_compat.h] cfg80211_ch_switch_started_notify: Universal wrapper that handles all 4 historical signature variants (3/4/5/6 parameters); reads punctured fields directly from chandef, removing dependency on the punct_bitmap field which may no longer exist.
+    [aic8800_fdrv/rwnx_compat.h] ieee80211_amsdu_to_8023s: Universal wrapper (fixed an issue where older version-guessing logic incorrectly handled certain kernel/backport variants that included an extra bool *amsdu_has_close parameter).
+    [aic8800_fdrv/rwnx_compat.h] from_timer / del_timer / del_timer_sync: Switched from #ifndef (which failed because these are regular functions in older kernels, not macros) to explicit LINUX_VERSION_CODE checks (6.15/6.17).
+    [aic8800_fdrv/rwnx_main.c] set_monitor_channel / set_wiphy_params / set_tx_power / start_radar_detection:
+    Split each function into an implementation (_impl) plus _old and _new variants. Used the RWNX_CFG80211_OP_COMPAT macro to inspect the actual field type of struct cfg80211_ops and select the matching variant. Completely removed the NL80211_ATTR_WIPHY_RADIO_INDEX feature test (unreliable, as some kernels lack this macro despite requiring the new signature).
+    [aic8800_fdrv/rwnx_main.c] cfg80211_ch_switch_notify: Removed a redundant 0 parameter in the kernel >= 6.3.0 branch.
+
+    === Wi-Fi 6 (5GHz) ===
+    [aic8800_fdrv/Makefile] CONFIG_USE_5G: Changed from n to y — fixed an uninitialized variable read bug (struct aic_feature_t feature.hwinfo) when sending the stack start request to the firmware; properly restored the code path for configuring is_5g_support/HE based on each chip.
+
+    === Code Cleanup/Warnings ===
+    [aic8800_fdrv(rwnx_rx.c, rwnx_radar.c, aicwf_usb.c, rwnx_main.c, ...)] Added static qualifiers to 63 functions used only within a single file (cross-checked both modules to avoid misidentifying functions with matching names).
+    [aic8800_fdrv(aicwf_usb.c, aicwf_sdio.c, aicwf_txrxif.c)] Re-synchronized 3 forward declarations that had mismatched static/non-static qualifiers following the cleanup above (fixed actual build errors and re-scanned the entire codebase).
+    [aic8800_fdrv/aicwf_usb.h] Added formal declaration for aicwf_usb_cancel_all_urbs, removing duplicate forward declarations in aicwf_txrxif.c.
+    [aic_load_fw/aic_bluetooth_main.c] Corrected the module description to reflect its true nature (it acts as a joint Wi-Fi/BT loader and does not register a real Bluetooth device) — kept the underlying logic intact to avoid breaking the Wi-Fi workflow.
+
+    === Packaging and installation===
+    [Makefile] Fixed the "test: -lt: unexpected operator" error that occurred when $(VERSION) was empty during direct make clean or make uninstall invocations (outside of kbuild).
+    [DEBIAN/control] Added Depends: build-essential, linux-headers-generic | linux-headers-amd64 — apt now installs these prior to entering the package transaction, eliminating nested lock deadlocks; autoremove will no longer purge them since they are explicitly defined as real dependencies.
+    [DEBIAN/postinst] Removed apt-get install commands (the root cause of package lock deadlocks); replaced with clean checks and clear error messaging if headers matching the currently running kernel are missing.
+    [DEBIAN/postinst] Added logic to check and load usbcore before calling insmod, providing a clear error message if no USB controller is found (common in Virtual Machines without USB passthrough enabled).
+    [DEBIAN/postinst] Added an active scanning mechanism for /sys/bus/usb/devices by VID:PID (a69c:5721 / 2357:0147) followed by an unbind+bind cycle to force the device through the correct mode-switching sequence, rather than relying solely on udev or timing.
+    [DEBIAN/prerm] Added make clean invocation in the parent drivers/aic8800 directory (fixed leaked artifacts like Module.symvers, modules.order, .tmp_versions, and .module-common.o).
+    [Entire package] Relocated the source tree from /AIC8800 to /tmp/AIC8800 (avoiding direct installation to root /); updated all corresponding paths across postinst and prerm.
+    [DEBIAN/prerm] Added rm -rf for the entire /tmp/AIC8800 directory at the end — resolves the "directory not empty so not removed" warning; included a guard so the script does not fail if /tmp has already been wiped (e.g., via tmpfs).
+
+
+=============================================================
 update_date:2026_0624_1606
-version:1.0-linux7.0.0
+version:v1.0-linux7.0.0
 info:
     1.[aic8800_fdrv/rwnx_compat.h] Add timer API compat macros: from_timer->timer_container_of, del_timer/del_timer_sync->timer_delete/timer_delete_sync, in_irq->in_hardirq (auto-detected via #ifndef)
     2.[aic8800_fdrv/rwnx_compat.h] Add cfg80211_rx_spurious_frame_compat / cfg80211_rx_unexpected_4addr_frame_compat macros (kernel >=6.7 adds link_id param)
