@@ -4,19 +4,57 @@ Minor_version=`uname -r |awk -F'.' '{print $2}'`
 GREEN='\033[1;32m'
 YELLOW='\033[1;33m'
 RED='\033[0;31m'
-cp /AIC8800/aic.rules /etc/udev/rules.d
+cp /tmp/AIC8800/aic.rules /etc/udev/rules.d
 udevadm trigger
 udevadm control --reload
 echo ">>>   udev done"
+
+# --- Force the AIC8800 USB device through its mode-switch cycle ---
+# This chip first enumerates as a fake CD-ROM/Mass-Storage device
+# (idVendor=a69c, idProduct=5721) and only switches to its real Wi-Fi
+# mode (idVendor=2357, idProduct=0147) after being "ejected". The udev
+# rule above normally triggers that automatically, but if the device was
+# already plugged in before udev/this driver were ready (e.g. right after
+# boot), it can be left sitting in the wrong mode. So in addition to the
+# udev rule, actively look for the device by either known VID:PID and
+# force a USB unbind+rebind (full re-enumeration) to make sure it goes
+# through the switch reliably, instead of just hoping the timing lines up.
+aic_usb_reset() {
+    local found=0
+    for devpath in /sys/bus/usb/devices/*; do
+        devname="$(basename "$devpath")"
+        # only top-level USB devices (e.g. "1-1"), skip interfaces ("1-1:1.0")
+        case "$devname" in
+            *:*) continue ;;
+        esac
+        [ -f "$devpath/idVendor" ] || continue
+        [ -f "$devpath/idProduct" ] || continue
+        vid="$(cat "$devpath/idVendor" 2>/dev/null)"
+        pid="$(cat "$devpath/idProduct" 2>/dev/null)"
+        case "$vid:$pid" in
+            a69c:5721|2357:0147)
+                found=1
+                echo ">>>   found AIC8800 USB device at ${devname} (${vid}:${pid}), resetting..."
+                echo "$devname" > /sys/bus/usb/drivers/usb/unbind 2>/dev/null
+                sleep 1
+                echo "$devname" > /sys/bus/usb/drivers/usb/bind 2>/dev/null
+                sleep 2
+                ;;
+        esac
+    done
+    return $((1 - found))
+}
+
 if [ -L /dev/aicudisk ]; then
-echo "device exist"
-eject /dev/aicudisk
-else
-echo ">>>   device not exist"
+    echo "device exist"
+    eject /dev/aicudisk
+    sleep 1
 fi
-cd /AIC8800/fw/
+
+aic_usb_reset || echo ">>>   device not exist"
+cd /tmp/AIC8800/fw/
 rm -rf /lib/firmware/aic8800DC
-cp -rf /AIC8800/fw/aic8800DC /lib/firmware/
+cp -rf /tmp/AIC8800/fw/aic8800DC /lib/firmware/
 echo "cp fw done"
 
 # --- Make sure linux headers for the *currently running* kernel exist ---
@@ -37,17 +75,18 @@ KERNEL_HEADERS_DIR="/lib/modules/${KERNEL_REL}/build"
 if [ -e "$KERNEL_HEADERS_DIR/Makefile" ]; then
     echo ">>>   linux headers already present for kernel ${KERNEL_REL}"
 else
-    echo ">>>   linux headers for the currently running kernel (${KERNEL_REL}) were not found at ${KERNEL_HEADERS_DIR}."
+    echo ">>>   linux headers for the currently running kernel (${KERNEL_REL})"
+    echo ">>>   were not found at ${KERNEL_HEADERS_DIR}."
     echo ">>>   This usually means headers got installed for a different/newer kernel than the one"
     echo ">>>   currently booted. Please install the matching package for your distro, e.g.:"
-    echo ">>>     Debian:  sudo apt-get install linux-headers-${KERNEL_REL}   (or linux-headers-amd64)"
-    echo ">>>     Ubuntu:  sudo apt-get install linux-headers-${KERNEL_REL}   (or linux-headers-generic)"
+    echo ">>>     Debian:  sudo apt-get install linux-headers-${KERNEL_REL}  (or linux-headers-amd64)"
+    echo ">>>     Ubuntu:  sudo apt-get install linux-headers-${KERNEL_REL}  (or linux-headers-generic)"
     echo ">>>   then reboot if needed, and re-run this install."
     echo ">>>   install Mercury UX3H (AIC8800) Wi-Fi driver failed"
     exit 1
 fi
 
-cd /AIC8800/drivers/aic8800/
+cd /tmp/AIC8800/drivers/aic8800/
 make
 if [ $? -ne 0 ]; then
     echo ">>>   make failed, install Mercury UX3H (AIC8800) Wi-Fi drvier failed"
@@ -60,7 +99,7 @@ if [ $? -ne 0 ]; then
 fi
 modprobe cfg80211
 
-###   This should be used for virtual machine, not real machine
+###   This should be used for virtual machine, not real machine (Also this will be remove in the next update)
 #modprobe usbcore
 #if ! lsmod | grep -q "^usbcore"; then
 #    echo ">>>   usbcore module not available on this kernel."
@@ -69,18 +108,18 @@ modprobe cfg80211
 #    echo ">>>   install Mercury UX3H (AIC8800) Wi-Fi driver failed"
 #    exit 1
 #fi
-insmod /AIC8800/drivers/aic8800/aic_load_fw/aic_load_fw.ko
+insmod /tmp/AIC8800/drivers/aic8800/aic_load_fw/aic_load_fw.ko
 if [ $? -ne 0 ]; then
     echo ">>>   insmode aic_load_fw failed, install Mercury UX3H (AIC8800) Wi-Fi driver failed"
     exit 1
 fi
-insmod /AIC8800/drivers/aic8800/aic8800_fdrv/aic8800_fdrv.ko
+insmod /tmp/AIC8800/drivers/aic8800/aic8800_fdrv/aic8800_fdrv.ko
 if [ $? -ne 0 ]; then
     echo ">>>   insmod aic8800_fdrv failed, install Mercury UX3H (AIC8800) Wi-Fi driver failed"
     exit 1
 fi
 echo ">>>   insmod done"
-cd /AIC8800/aicrf_test/
+cd /tmp/AIC8800/aicrf_test/
 make
 if [ $? -ne 0 ]; then
     echo ">>>   make failed, install Mercury UX3H (AIC8800) Wi-Fi driver failed"

@@ -1,20 +1,35 @@
 #!/bin/bash
 YELLOW='\033[1;33m'
-rm /etc/udev/rules.d/aic.rules
+rm -f /etc/udev/rules.d/aic.rules
 udevadm control --reload
 echo -e "${YELLOW}Uninstall Mercury UX3H (AIC8800) Wi-Fi driver!!!!!\033[0m"
-rmmod aic8800_fdrv
-rmmod aic_load_fw
-cd /AIC8800/drivers/aic8800/aic8800_fdrv/
-make clean
-make uninstall
-cd /AIC8800/drivers/aic8800/aic_load_fw/
-make clean
-make uninstall
-cd /AIC8800/drivers/aic8800/
-make clean
-rm -f .module-common.o .module-common.o.cmd
-cd /AIC8800/aicrf_test
-make clean
+rmmod aic8800_fdrv 2>/dev/null
+rmmod aic_load_fw 2>/dev/null
+if [ -d /tmp/AIC8800 ]; then
+    if [ -d /tmp/AIC8800/drivers/aic8800/aic8800_fdrv ]; then
+        cd /tmp/AIC8800/drivers/aic8800/aic8800_fdrv/
+        make clean
+        make uninstall
+    fi
+    if [ -d /tmp/AIC8800/drivers/aic8800/aic_load_fw ]; then
+        cd /tmp/AIC8800/drivers/aic8800/aic_load_fw/
+        make clean
+        make uninstall
+    fi
+    if [ -d /tmp/AIC8800/drivers/aic8800 ]; then
+        cd /tmp/AIC8800/drivers/aic8800/
+        make clean
+    fi
+    if [ -d /tmp/AIC8800/aicrf_test ]; then
+        cd /tmp/AIC8800/aicrf_test
+        make clean
+    fi
+    cd /
+    # Remove the whole scratch tree ourselves so dpkg never finds leftover
+    # build artifacts (Module.symvers, .tmp_versions/, *.o, *.cmd, ...) and
+    # warns "directory not empty so not removed".
+    rm -rf /tmp/AIC8800
+fi
+
 rm -rf /lib/firmware/aic8800DC/
 #exit 0
