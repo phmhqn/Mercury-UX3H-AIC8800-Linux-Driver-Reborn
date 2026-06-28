@@ -7,7 +7,7 @@ Now support from Linux kernel 5.x to the latest version.
 
 To install, make sure the device is not plugged in. Download the pre-packaged package from the [Releases](https://github.com/phmhqn/Mercury-UX3H-AIC8800-Linux-Driver-Reborn/releases) page, then open your console, navigate to the download folder and execute the following command:
 ```
-sudo apt install ./AIC8800-MercuryUX3H-v1.1-rm-UniLinuxKrnl5-6-7.deb
+sudo apt install ./AIC8800-MercuryUX3H-{version}-rm-UniLinuxKrnl5-6-7.deb
 ```
 > *This driver needs to be built according to your computer's configuration, it may take a long time to complete. We advise you to wait patiently.*
 
